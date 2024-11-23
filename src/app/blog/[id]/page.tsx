@@ -1,5 +1,4 @@
-import React from "react";
-import { notFound } from "next/navigation";
+import { Metadata } from 'next';
 
 interface Post {
   id: number;
@@ -11,7 +10,7 @@ async function getPost(id: string): Promise<Post | null> {
   try {
     const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`, {
       next: {
-        revalidate: 3600 // Revalidate every hour
+        revalidate: 3600
       }
     });
     
@@ -26,13 +25,11 @@ async function getPost(id: string): Promise<Post | null> {
   }
 }
 
-// This should be in a separate generateStaticParams.ts file or
-// added as a named export in the page file
 export async function generateStaticParams() {
   try {
     const res = await fetch("https://jsonplaceholder.typicode.com/posts", {
       next: {
-        revalidate: 3600 // Revalidate every hour
+        revalidate: 3600
       }
     });
     
@@ -47,18 +44,27 @@ export async function generateStaticParams() {
   }
 }
 
-interface PageProps {
-  params: {
-    id: string;
+// Add metadata generation
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const post = await getPost(params.id);
+  
+  return {
+    title: post?.title ?? 'Post Not Found',
+    description: post?.body?.slice(0, 160) ?? 'Post content not available',
   };
 }
 
-// This needs to be a Server Component
-export default async function Page({ params }: PageProps) {
+// Use the correct params type for Next.js pages
+export default async function Page({ params }: {
+  params: {
+    id: string;
+  };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
   const post = await getPost(params.id);
 
   if (!post) {
-    notFound();
+    throw new Error('Failed to fetch post');
   }
 
   return (
