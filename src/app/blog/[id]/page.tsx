@@ -27,7 +27,7 @@ export async function generateStaticParams() {
 
 interface PostPageProps {
   params: {
-    id: string;
+    id: string | any;
   };
 }
 
