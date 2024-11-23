@@ -1,4 +1,6 @@
-import { Metadata } from 'next';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { notFound } from "next/navigation";
 
 interface Post {
   id: number;
@@ -6,71 +8,47 @@ interface Post {
   body: string;
 }
 
-async function getPost(id: string): Promise<Post | null> {
-  try {
-    const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`, {
-      next: {
-        revalidate: 3600
-      }
-    });
-    
-    if (!res.ok) {
-      return null;
-    }
-    
-    return res.json();
-  } catch (error) {
-    console.error('Failed to fetch post:', error);
+const getPost = async (id: string): Promise<Post | null> => {
+  const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
+  if (!res.ok) {
     return null;
   }
-}
+  return res.json();
+};
 
-export async function generateStaticParams() {
-  try {
-    const res = await fetch("https://jsonplaceholder.typicode.com/posts", {
-      next: {
-        revalidate: 3600
-      }
-    });
-    
-    const posts: Post[] = await res.json();
+const PostPage: React.FC = () => {
+  const router = useRouter();
+  const { id } = router.query;
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    return posts.map((post) => ({
-      id: post.id.toString(),
-    }));
-  } catch (error) {
-    console.error('Failed to generate params:', error);
-    return [];
+  useEffect(() => {
+    if (id) {
+      getPost(id as string).then((data) => {
+        if (data) {
+          setPost(data);
+        } else {
+          notFound();
+        }
+        setLoading(false);
+      });
+    }
+  }, [id]);
+
+  if (loading) {
+    return <p>Loading...</p>;
   }
-}
-
-// Add metadata generation
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const post = await getPost(params.id);
-  
-  return {
-    title: post?.title ?? 'Post Not Found',
-    description: post?.body?.slice(0, 160) ?? 'Post content not available',
-  };
-}
-
-// Use the correct params type for Next.js pages
-export default async function Page({ params }: {
-  params: {
-    id: string;
-  };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}) {
-  const post = await getPost(params.id);
 
   if (!post) {
-    throw new Error('Failed to fetch post');
+    return <p>Post not found</p>;
   }
 
   return (
-    <main className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
-      <p className="text-gray-700">{post.body}</p>
+    <main>
+      <h1>{post.title}</h1>
+      <p>{post.body}</p>
     </main>
   );
-}
+};
+
+export default PostPage;
