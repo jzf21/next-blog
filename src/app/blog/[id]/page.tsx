@@ -39,7 +39,7 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   return (
-    <main className={styles.main}>
+    <main >
       <h1>{post.title}</h1>
       <p>{post.body}</p>
     </main>
