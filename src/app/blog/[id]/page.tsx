@@ -1,7 +1,6 @@
 import React from "react";
 import { notFound } from "next/navigation";
 
-
 interface Post {
   id: number;
   title: string;
@@ -31,7 +30,7 @@ interface PostPageProps {
   };
 }
 
-export default async function PostPage({ params }: PostPageProps) {
+const PostPage: React.FC<PostPageProps> = async ({ params }) => {
   const post = await getPost(params.id);
 
   if (!post) {
@@ -39,9 +38,11 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   return (
-    <main >
+    <main>
       <h1>{post.title}</h1>
       <p>{post.body}</p>
     </main>
   );
-}
+};
+
+export default PostPage;
