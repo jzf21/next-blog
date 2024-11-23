@@ -27,7 +27,7 @@ export async function generateStaticParams() {
 
 interface PostPageProps {
   params: {
-    id: string | any;
+    id: string;
   };
 }
 
@@ -39,7 +39,7 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   return (
-    <main >
+    <main className={styles.main}>
       <h1>{post.title}</h1>
       <p>{post.body}</p>
     </main>
