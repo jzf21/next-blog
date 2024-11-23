@@ -8,29 +8,53 @@ interface Post {
 }
 
 async function getPost(id: string): Promise<Post | null> {
-  const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
-  if (!res.ok) {
+  try {
+    const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`, {
+      next: {
+        revalidate: 3600 // Revalidate every hour
+      }
+    });
+    
+    if (!res.ok) {
+      return null;
+    }
+    
+    return res.json();
+  } catch (error) {
+    console.error('Failed to fetch post:', error);
     return null;
   }
-  return res.json();
 }
 
+// This should be in a separate generateStaticParams.ts file or
+// added as a named export in the page file
 export async function generateStaticParams() {
-  const res = await fetch("https://jsonplaceholder.typicode.com/posts");
-  const posts: Post[] = await res.json();
+  try {
+    const res = await fetch("https://jsonplaceholder.typicode.com/posts", {
+      next: {
+        revalidate: 3600 // Revalidate every hour
+      }
+    });
+    
+    const posts: Post[] = await res.json();
 
-  return posts.map((post) => ({
-    id: post.id.toString(),
-  }));
+    return posts.map((post) => ({
+      id: post.id.toString(),
+    }));
+  } catch (error) {
+    console.error('Failed to generate params:', error);
+    return [];
+  }
 }
 
-interface PostPageProps {
+interface PageProps {
   params: {
     id: string;
   };
 }
 
-const PostPage: React.FC<PostPageProps> = async ({ params }) => {
+// This needs to be a Server Component
+export default async function Page({ params }: PageProps) {
   const post = await getPost(params.id);
 
   if (!post) {
@@ -38,11 +62,9 @@ const PostPage: React.FC<PostPageProps> = async ({ params }) => {
   }
 
   return (
-    <main>
-      <h1>{post.title}</h1>
-      <p>{post.body}</p>
+    <main className="p-4 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
+      <p className="text-gray-700">{post.body}</p>
     </main>
   );
-};
-
-export default PostPage;
+}
